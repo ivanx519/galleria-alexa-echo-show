@@ -158,18 +158,18 @@ custom headers.
 
 Being upfront about what still doesn't work perfectly, instead of hiding it:
 
-- **The display can go idle after a few minutes with no interaction**, even
-  though the skill session itself is kept open on purpose
-  (`should_end_session = False`, exactly so this is meant to behave like an
-  always-on picture frame). In practice, saying the explicit voice command
-  again ("show photos" / "show videos" / "show photos and videos") is the
-  reliable way to bring it back — this reopens/re-renders the APL document
-  fresh rather than resuming the one that went idle.
-- **Mixed mode (photos + videos together) has been observed to freeze on a
-  single photo after roughly 16 minutes** of continuous playback, requiring
-  the same fix: say the voice command again to restart it. This looks like
-  a reliability limit of long-running APL autoplay sessions on Echo Show
-  rather than a simple logic bug, but it hasn't been root-caused yet.
+- **Right after opening the skill, say one of the three explicit commands
+  immediately** — "show photos", "show videos", or "show photos and
+  videos". Doing this right away is what keeps the display stable; relying
+  on the bare launch behavior without following up with one of these is
+  less reliable.
+- **Mixed mode (photos + videos together) specifically has been observed to
+  freeze on a single item after roughly 16 minutes** of continuous
+  playback. Photos-only and videos-only mode don't show this. The fix is
+  the same: just repeat "show photos and videos" and it picks back up.
+  This looks like a reliability limit of that specific long-running APL
+  autoplay path rather than a simple logic bug, but it hasn't been
+  root-caused yet.
 
 If you dig into this and figure out the actual cause, a PR or an issue with
 findings would be very welcome.
