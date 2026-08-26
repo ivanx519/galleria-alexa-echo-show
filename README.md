@@ -1,7 +1,16 @@
-# Limone — Alexa Skill Foto/Slideshow
+# Galleria Alexa — Skill Foto/Slideshow
 
 Cornice digitale su Echo Show: slideshow delle foto/video di famiglia, con
 ricerca vocale per mese o luogo ("mostra dicembre", "mostra Villaspeciosa").
+
+> **Perché "Limone"?** Il nome di invocazione della skill (quello che dici ad
+> Alexa per aprirla, es. "Alexa, apri Limone") è volutamente una parola
+> insolita e senza nessun legame ovvio con foto/gallerie. È una scelta fatta
+> apposta: nomi generici tipo "galleria" o "foto" rischiano di far confondere
+> Alexa con altre skill che usano parole simili, aprendo la cosa sbagliata.
+> Una parola corta, riconoscibile e improbabile come "limone" evita
+> ambiguità — puoi usare qualsiasi parola funzioni allo stesso modo per la
+> tua, basta cambiarla in `interaction_model.json`.
 
 ## Componenti
 
