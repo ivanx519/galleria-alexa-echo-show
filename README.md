@@ -37,11 +37,56 @@ voice commands requires a manual round with `ask smapi
 set-interaction-model` (async, check `ask smapi get-skill-status` for the
 "SUCCEEDED" confirmation).
 
+## Scale — running on a real 11k+ photo library
+
+Not a toy demo: the deployment this was built for currently manages
+**11,436 photos and 656 videos**, and the slideshow rotates through the
+whole library smoothly. Three viewing modes (`MostraGalleriaIntent` for
+photos, `MostraVideoIntent` for videos, `MostraFotoVideoIntent` for both
+mixed together), plus favorites as an overlay filter on top of any of them,
+and free-text voice search by month or place (`MostraArgomentoIntent`).
+
+## Why the visuals are deliberately basic
+
+The APL layout is intentionally plain (no fancy transitions, minimal
+overlay chrome) — this is a direct consequence of the byte budget above,
+not a lack of polish. Every extra visual element in the APL document (more
+layout nodes, richer styling, animations) is more bytes spent on rendering
+instructions instead of on the batch of actual photo/video data — at 11k+
+items, that trade-off matters. Simpler UI = more headroom to keep batches
+large enough that rotating through a big library stays smooth.
+
+## Voice interaction challenges actually solved
+
+A few real ones worth mentioning, in case you're building something
+similar:
+
+- **Invocation collision**: covered above (the "Limone" naming choice) — a
+  generic name increases the odds Alexa opens a *different* skill entirely
+  on a similar-sounding request.
+- **Free-text place/month matching**: `MostraArgomentoIntent` uses
+  `AMAZON.SearchQuery`, which is intentionally unconstrained by Alexa (no
+  fixed slot values) — matching what the user actually said against
+  hundreds of real place names/dates in the library needs fuzzy,
+  forgiving matching server-side, not exact string equality.
+- **Double-speed regression on "resume"**: `AMAZON.ResumeIntent` for photos
+  was sending an extra `SendEvent` left over from an earlier version, which
+  made the slideshow visibly speed up every time you said "riprendi"
+  ("resume") — the touch/screen equivalent didn't have this because it went
+  through a different code path, which is exactly what made it easy to miss
+  at first.
+
 ## Byte budget
 
-APL responses have an Alexa limit of 24,576 bytes. `DIMENSIONE_BLOCCO` in
-`lambda_function.py` and `BATCH_MASSIMO` in `server.py` must stay aligned —
-verify them with REAL data (real captions, not synthetic ones: short ones
+APL responses have an Alexa limit of 24,576 bytes — this is the real
+constraint that shapes the whole architecture, not just a footnote. With a
+library in the thousands, you can't hand Alexa the full list in one
+response; `DIMENSIONE_BLOCCO` in `lambda_function.py` and `BATCH_MASSIMO` in
+`server.py` (both set to **65** in the deployment above) fetch and rotate
+through the library in fixed-size batches instead, so the response size
+stays constant no matter whether the library has 100 photos or 11,000. The
+two constants must stay aligned between the two files, and should be
+verified with REAL data (real captions, not synthetic ones: short ones
 underestimate the cost) before raising them.
 
 ## Setup from scratch
