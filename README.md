@@ -1,51 +1,53 @@
-# Galleria Alexa — Skill Foto/Slideshow
+# Galleria Alexa — Photo/Slideshow Skill
 
-Cornice digitale su Echo Show: slideshow delle foto/video di famiglia, con
-ricerca vocale per mese o luogo ("mostra dicembre", "mostra Villaspeciosa").
+Digital photo frame on Echo Show: slideshow of family photos/videos, with
+voice search by month or place ("show December", "show Villaspeciosa").
 
-> **Perché "Limone"?** Il nome di invocazione della skill (quello che dici ad
-> Alexa per aprirla, es. "Alexa, apri Limone") è volutamente una parola
-> insolita e senza nessun legame ovvio con foto/gallerie. È una scelta fatta
-> apposta: nomi generici tipo "galleria" o "foto" rischiano di far confondere
-> Alexa con altre skill che usano parole simili, aprendo la cosa sbagliata.
-> Una parola corta, riconoscibile e improbabile come "limone" evita
-> ambiguità — puoi usare qualsiasi parola funzioni allo stesso modo per la
-> tua, basta cambiarla in `interaction_model.json`.
+> **Why "Limone" (Italian for "lemon")?** The skill's invocation name (what
+> you say to Alexa to open it, e.g. "Alexa, open Limone") is deliberately an
+> unusual word with no obvious connection to photos/galleries. This is a
+> deliberate choice: generic names like "gallery" or "photos" risk making
+> Alexa confuse the invocation with other skills using similar words, opening
+> the wrong thing. A short, memorable, unlikely word like "lemon" avoids
+> ambiguity — you can use any word that works the same way for yours, just
+> change it in `interaction_model.json`.
 
-## Componenti
+## Components
 
-| File | Dove gira | Deploy |
+| File | Runs on | Deploy |
 |---|---|---|
 | `lambda_function.py` | AWS Lambda `galleria-alexa-skill` | `aws lambda update-function-code` (GitHub Actions) |
-| `server.py` | VPS, servizio systemd `foto-slideshow-api` (porta 8770) | SSH + `systemctl restart` (GitHub Actions) |
-| `ridimensiona.py` | VPS, batch manuale | ridimensiona le foto originali + geocoding (Nominatim) |
-| `ridimensiona_video.py` | VPS, batch manuale | comprime i video originali (ffmpeg, 720p H.264) |
-| `organizza_per_anno.py` | VPS, batch manuale | crea `Foto/<anno>/` e `Video/<anno>/` via hardlink per l'accesso SFTP |
-| `interaction_model.json` | Alexa Developer Console | caricato via `ask smapi set-interaction-model` (manuale, non in CI) |
+| `server.py` | VPS, systemd service `foto-slideshow-api` (port 8770) | SSH + `systemctl restart` (GitHub Actions) |
+| `ridimensiona.py` | VPS, manual batch | resizes original photos + geocoding (Nominatim) |
+| `ridimensiona_video.py` | VPS, manual batch | compresses original videos (ffmpeg, 720p H.264) |
+| `organizza_per_anno.py` | VPS, manual batch | creates `Foto/<year>/` and `Video/<year>/` via hardlinks for SFTP access |
+| `interaction_model.json` | Alexa Developer Console | uploaded via `ask smapi set-interaction-model` (manual, not in CI) |
 
-Skill ID: il tuo, assegnato quando crei la skill nella Alexa Developer Console (vedi sezione Setup)
+Skill ID: yours, assigned when you create the skill in the Alexa Developer
+Console (see Setup section)
 
-## Deploy automatico
+## Automatic deploy
 
-Push su `master` → GitHub Actions:
-- **deploy-lambda**: installa `requirements.txt` in `package/`, copia `lambda_function.py`, zippa, aggiorna la Lambda su AWS (credenziali scoped, permessi limitati a `freezer-alexa-skill`/`galleria-alexa-skill`)
-- **deploy-vps**: `git pull` di questo repo in `/opt/foto_slideshow_repo` sulla VPS, copia `server.py` e i tre script in `/opt/foto_slideshow/`, riavvia `foto-slideshow-api`
+Push to `master` → GitHub Actions:
+- **deploy-lambda**: installs `requirements.txt` into `package/`, copies `lambda_function.py`, zips it, updates the Lambda on AWS (scoped credentials, permissions limited to `freezer-alexa-skill`/`galleria-alexa-skill`)
+- **deploy-vps**: `git pull` of this repo into `/opt/foto_slideshow_repo` on the VPS, copies `server.py` and the three scripts into `/opt/foto_slideshow/`, restarts `foto-slideshow-api`
 
-`interaction_model.json` NON viene applicato automaticamente — un cambio ai
-comandi vocali richiede un giro manuale con `ask smapi set-interaction-model`
-(async, verificare `ask smapi get-skill-status` per la conferma "SUCCEEDED").
+`interaction_model.json` is NOT applied automatically — a change to the
+voice commands requires a manual round with `ask smapi
+set-interaction-model` (async, check `ask smapi get-skill-status` for the
+"SUCCEEDED" confirmation).
 
 ## Byte budget
 
-Le risposte APL hanno un limite Alexa di 24.576 byte. `DIMENSIONE_BLOCCO` in
-`lambda_function.py` e `BATCH_MASSIMO` in `server.py` devono restare
-allineati — vanno verificati con dati REALI (didascalie vere, non
-sintetiche: quelle corte sottostimano il costo) prima di alzarli.
+APL responses have an Alexa limit of 24,576 bytes. `DIMENSIONE_BLOCCO` in
+`lambda_function.py` and `BATCH_MASSIMO` in `server.py` must stay aligned —
+verify them with REAL data (real captions, not synthetic ones: short ones
+underestimate the cost) before raising them.
 
-## Setup da zero
+## Setup from scratch
 
-Serve un tuo server (VPS o macchina sempre accesa, raggiungibile via HTTPS)
-e un account Amazon Developer per creare la skill.
+You need your own server (VPS or an always-on machine, reachable via HTTPS)
+and an Amazon Developer account to create the skill.
 
 ### 1. Server (`server.py`)
 
@@ -53,60 +55,60 @@ e un account Amazon Developer per creare la skill.
 pip install aiohttp pillow
 ```
 
-Cambia in `server.py` (e in `lambda_function.py`, devono coincidere):
-- `API_TOKEN` — una stringa segreta a tua scelta
-- Le cartelle base (`originali/`, `ridimensionate/`, `video_originali/`, ecc.)
-  se vuoi percorsi diversi da quelli di default
+Change in `server.py` (and in `lambda_function.py`, they must match):
+- `API_TOKEN` — a secret string of your choice
+- The base folders (`originali/`, `ridimensionate/`, `video_originali/`,
+  etc.) if you want different paths than the defaults
 
-Avvialo (systemd/supervisor consigliato per tenerlo sempre su):
+Start it (systemd/supervisor recommended to keep it always on):
 ```bash
-python3 server.py  # ascolta di default sulla porta 8770
+python3 server.py  # listens on port 8770 by default
 ```
 
-Mettilo dietro un reverse proxy HTTPS (nginx/Caddy) — la skill Alexa e i
-componenti APL richiedono HTTPS, non HTTP semplice. Se non hai già un
-dominio, un servizio gratuito come [nip.io](https://nip.io) (DNS wildcard
-che risolve `IP-con-trattini.nip.io` al tuo IP) evita di doverne comprare uno
-solo per questo.
+Put it behind an HTTPS reverse proxy (nginx/Caddy) — the Alexa skill and the
+APL components require HTTPS, not plain HTTP. If you don't already have a
+domain, a free service like [nip.io](https://nip.io) (wildcard DNS that
+resolves `IP-with-dashes.nip.io` to your IP) saves you from buying one just
+for this.
 
-### 2. Skill Alexa
+### 2. Alexa skill
 
-1. Crea una skill custom su [developer.amazon.com](https://developer.amazon.com/alexa/console/ask) — tipo "Custom", modello "Provision your own"
-2. Carica `interaction_model.json` come modello di interazione (tab JSON Editor, oppure `ask smapi set-interaction-model` da riga di comando)
-3. Crea una funzione Lambda su AWS (Python 3.12), incolla `lambda_function.py`, installa le dipendenze di `requirements.txt` nello stesso pacchetto
-4. Nella Lambda, aggiorna `BOT_URL` e `BOT_TOKEN` con l'URL del tuo server e il token scelto sopra
-5. Collega l'ARN della Lambda come endpoint della skill
+1. Create a custom skill on [developer.amazon.com](https://developer.amazon.com/alexa/console/ask) — type "Custom", model "Provision your own"
+2. Upload `interaction_model.json` as the interaction model (JSON Editor tab, or `ask smapi set-interaction-model` from the command line)
+3. Create a Lambda function on AWS (Python 3.12), paste in `lambda_function.py`, install the dependencies from `requirements.txt` into the same package
+4. In the Lambda, update `BOT_URL` and `BOT_TOKEN` with your server's URL and the token you chose above
+5. Link the Lambda's ARN as the skill's endpoint
 
-### 3. Deploy automatico (opzionale)
+### 3. Automatic deploy (optional)
 
-Il workflow `.github/workflows/deploy.yml` automatizza i passi 3-4 (build +
-upload Lambda) e il deploy di `server.py` su una VPS via SSH. Richiede questi
-Secrets nel repo GitHub: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`,
-`VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`, `GH_PAT` (un Personal Access Token con
-permesso di leggere questo repo, per il clone sulla VPS). Adatta i nomi di
-funzione/percorsi nel workflow ai tuoi.
+The `.github/workflows/deploy.yml` workflow automates steps 3-4 (build +
+upload to Lambda) and deploying `server.py` to a VPS over SSH. It requires
+these Secrets in the GitHub repo: `AWS_ACCESS_KEY_ID`,
+`AWS_SECRET_ACCESS_KEY`, `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`, `GH_PAT` (a
+Personal Access Token with read permission on this repo, for cloning it on
+the VPS). Adjust the function/path names in the workflow to your own.
 
-`interaction_model.json` resta sempre manuale (vedi sopra) anche con la CI
-attiva.
+`interaction_model.json` always stays manual (see above) even with CI
+enabled.
 
-## Endpoint principali del server
+## Main server endpoints
 
-| Endpoint | Uso |
+| Endpoint | Use |
 |---|---|
-| `GET /api/foto/lista`, `/api/video/lista` | Elenco paginato per l'app companion |
-| `GET /api/foto/batch`, `/api/video/batch` | Blocco di foto/video per lo slideshow APL |
-| `GET /api/foto/cerca?q=...` | Ricerca vocale per mese/luogo |
-| `GET /api/foto/accadde-oggi` | "Accadde oggi" — stesso giorno/mese negli anni passati |
-| `POST /api/foto/preferita`, `/api/video/preferita` | Toggle preferito |
-| `POST /api/foto/upload`, `/api/video/upload` | Caricamento da app companion |
-| `GET /api/impostazioni`, `POST /api/impostazioni` | Durata dello slideshow |
+| `GET /api/foto/lista`, `/api/video/lista` | Paginated listing for the companion app |
+| `GET /api/foto/batch`, `/api/video/batch` | Batch of photos/videos for the APL slideshow |
+| `GET /api/foto/cerca?q=...` | Voice search by month/place |
+| `GET /api/foto/accadde-oggi` | "On this day" — same day/month in past years |
+| `POST /api/foto/preferita`, `/api/video/preferita` | Toggle favorite |
+| `POST /api/foto/upload`, `/api/video/upload` | Upload from the companion app |
+| `GET /api/impostazioni`, `POST /api/impostazioni` | Slideshow duration |
 
-Tutti richiedono `Authorization: Bearer <API_TOKEN>`, tranne gli endpoint
-binari (`/api/foto/binario/...`, `/api/foto/miniatura/...`) che accettano
-anche `?token=<API_TOKEN>` in query string — necessario perché i componenti
-Image/Video di APL caricano l'URL direttamente, senza poter impostare header
-custom.
+All of them require `Authorization: Bearer <API_TOKEN>`, except the binary
+endpoints (`/api/foto/binario/...`, `/api/foto/miniatura/...`) which also
+accept `?token=<API_TOKEN>` as a query string — necessary because APL's
+Image/Video components load the URL directly, without being able to set
+custom headers.
 
-## Licenza
+## License
 
-MIT — vedi [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE).
