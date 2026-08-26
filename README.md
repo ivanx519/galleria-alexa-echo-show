@@ -154,6 +154,26 @@ accept `?token=<API_TOKEN>` as a query string — necessary because APL's
 Image/Video components load the URL directly, without being able to set
 custom headers.
 
+## Known limitations (not fixed yet)
+
+Being upfront about what still doesn't work perfectly, instead of hiding it:
+
+- **The display can go idle after a few minutes with no interaction**, even
+  though the skill session itself is kept open on purpose
+  (`should_end_session = False`, exactly so this is meant to behave like an
+  always-on picture frame). In practice, saying the explicit voice command
+  again ("show photos" / "show videos" / "show photos and videos") is the
+  reliable way to bring it back — this reopens/re-renders the APL document
+  fresh rather than resuming the one that went idle.
+- **Mixed mode (photos + videos together) has been observed to freeze on a
+  single photo after roughly 16 minutes** of continuous playback, requiring
+  the same fix: say the voice command again to restart it. This looks like
+  a reliability limit of long-running APL autoplay sessions on Echo Show
+  rather than a simple logic bug, but it hasn't been root-caused yet.
+
+If you dig into this and figure out the actual cause, a PR or an issue with
+findings would be very welcome.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
