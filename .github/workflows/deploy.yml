@@ -1,0 +1,73 @@
+name: Deploy
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy-lambda:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Installa le dipendenze in package/
+        run: pip install -r requirements.txt -t package/
+
+      - name: Copia il codice ed impacchetta lo zip
+        run: |
+          cp lambda_function.py package/lambda_function.py
+          cd package
+          zip -q -r ../galleria-alexa-lambda.zip . -x "__pycache__/*" -x "*.pyc"
+
+      - name: Configura le credenziali AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Aggiorna la Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name galleria-alexa-skill \
+            --zip-file fileb://galleria-alexa-lambda.zip \
+            --query '[FunctionName,LastModified,CodeSha256]' \
+            --output table
+
+  deploy-vps:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy su VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          # "set -e": repo privato — se il clone/fetch fallisce (es. token
+          # scaduto) lo script deve fermarsi ed errore in modo visibile,
+          # non proseguire silenziosamente lasciando in giro il codice
+          # vecchio con un "successo" falso (bug preso dal vivo il
+          # 22/08/2026: la prima run È risultata verde senza aver
+          # aggiornato nulla, perché "git clone" anonimo su un repo privato
+          # falliva ma lo script continuava comunque fino a un ultimo
+          # comando che riusciva sempre).
+          script: |
+            set -e
+            mkdir -p /opt/foto_slideshow_repo
+            cd /opt/foto_slideshow_repo
+            if [ ! -d .git ]; then
+              git clone https://ivanx519:${{ secrets.GH_PAT }}@github.com/ivanx519/galleria-alexa-skill.git .
+            else
+              git fetch origin master
+              git reset --hard origin/master
+            fi
+            cp server.py /opt/foto_slideshow/api/server.py
+            cp ridimensiona.py ridimensiona_video.py organizza_per_anno.py rileva_duplicati.py /opt/foto_slideshow/
+            systemctl restart foto-slideshow-api
+            sleep 2
+            systemctl is-active foto-slideshow-api
+            echo "✅ Deploy VPS completato"

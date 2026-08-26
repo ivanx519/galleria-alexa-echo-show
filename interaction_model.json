@@ -1,0 +1,160 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "intents": [
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        },
+        {
+          "slots": [],
+          "name": "MostraGalleriaIntent",
+          "samples": [
+            "apri limone",
+            "mostrami le foto",
+            "mostra le foto",
+            "mostra foto",
+            "mostra tutte le foto",
+            "apri la galleria",
+            "fammi vedere le foto",
+            "fammi vedere la galleria",
+            "avvia lo slideshow",
+            "avvia la galleria",
+            "vedi le foto",
+            "foto"
+          ]
+        },
+        {
+          "slots": [],
+          "name": "MostraVideoIntent",
+          "samples": [
+            "mostra i video",
+            "mostra video",
+            "mostrami i video",
+            "fammi vedere i video",
+            "apri i video",
+            "vedi i video",
+            "avvia i video",
+            "video"
+          ]
+        },
+        {
+          "slots": [],
+          "name": "MostraFotoVideoIntent",
+          "samples": [
+            "mostra foto e video",
+            "mostra le foto e i video",
+            "mostrami foto e video",
+            "fammi vedere foto e video",
+            "apri foto e video",
+            "vedi foto e video",
+            "avvia foto e video"
+          ]
+        },
+        {
+          "slots": [
+            {
+              "name": "argomento",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "name": "MostraArgomentoIntent",
+          "samples": [
+            "mostra {argomento}",
+            "mostra le foto di {argomento}",
+            "mostrami {argomento}",
+            "mostrami le foto di {argomento}",
+            "fammi vedere {argomento}",
+            "fammi vedere le foto di {argomento}",
+            "voglio vedere le foto di {argomento}",
+            "cerca {argomento}",
+            "cerca le foto di {argomento}"
+          ]
+        },
+        {
+          "name": "AMAZON.NextIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.PreviousIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.PauseIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.ResumeIntent",
+          "samples": []
+        },
+        {
+          "slots": [],
+          "name": "MutoIntent",
+          "samples": [
+            "muto",
+            "silenzia",
+            "metti muto",
+            "togli l'audio",
+            "silenzia l'audio",
+            "silenzia il video"
+          ]
+        },
+        {
+          "slots": [],
+          "name": "AudioIntent",
+          "samples": [
+            "audio",
+            "riattiva l'audio",
+            "attiva l'audio",
+            "riaccendi l'audio",
+            "togli il muto",
+            "rimetti l'audio"
+          ]
+        },
+        {
+          "slots": [],
+          "name": "AggiungiPreferitiIntent",
+          "samples": [
+            "aggiungi a preferiti",
+            "aggiungi ai preferiti",
+            "metti nei preferiti",
+            "metti tra i preferiti",
+            "segna come preferito",
+            "salva nei preferiti",
+            "aggiungi ai miei preferiti"
+          ]
+        },
+        {
+          "slots": [],
+          "name": "TogliPreferitiIntent",
+          "samples": [
+            "togli dai preferiti",
+            "rimuovi dai preferiti",
+            "elimina dai preferiti",
+            "togli dai miei preferiti",
+            "non è più un preferito",
+            "togli preferito"
+          ]
+        }
+      ],
+      "types": [],
+      "invocationName": "limone"
+    }
+  }
+}
